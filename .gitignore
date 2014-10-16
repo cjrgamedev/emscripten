@@ -32,6 +32,8 @@
 
 # Emscripten
 *.bc
+*.data
+*.js
 
 # Subversion
 .svn
