@@ -26,3 +26,18 @@
 *.exe
 *.out
 *.app
+
+# Dependency files
+*.d
+
+# Emscripten
+*.bc
+
+# Subversion
+.svn
+
+# Misc
+irrlicht-ogl-esirrlicht_timestamp
+tags
+timestamp
+
