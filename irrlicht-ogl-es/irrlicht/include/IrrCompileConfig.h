@@ -46,13 +46,13 @@
 //! Example: NO_IRR_COMPILE_WITH_X11_ would disable X11
 
 //! Uncomment this line to compile with the SDL device
-//#define _IRR_COMPILE_WITH_SDL_DEVICE_
+#define _IRR_COMPILE_WITH_SDL_DEVICE_
 #ifdef NO_IRR_COMPILE_WITH_SDL_DEVICE_
 #undef _IRR_COMPILE_WITH_SDL_DEVICE_
 #endif
 
 //! Comment this line to compile without the fallback console device.
-#define _IRR_COMPILE_WITH_CONSOLE_DEVICE_
+//#define _IRR_COMPILE_WITH_CONSOLE_DEVICE_
 #ifdef NO_IRR_COMPILE_WITH_CONSOLE_DEVICE_
 #undef _IRR_COMPILE_WITH_CONSOLE_DEVICE_
 #endif
@@ -129,7 +129,7 @@
 #define _IRR_LINUX_PLATFORM_
 #endif
 #define _IRR_POSIX_API_
-#define _IRR_COMPILE_WITH_X11_DEVICE_
+//#define _IRR_COMPILE_WITH_X11_DEVICE_
 #endif
 
 
@@ -211,7 +211,7 @@ If not defined, Windows Multimedia library is used, which offers also broad supp
 /** If you do not wish the engine to be compiled with OpenGL, comment this
 define out. */
 #if !defined(_IRR_IPHONE_PLATFORM_) && !defined(_IRR_ANDROID_PLATFORM_)
-#define _IRR_COMPILE_WITH_OPENGL_
+//#define _IRR_COMPILE_WITH_OPENGL_
 #endif
 #ifdef NO_IRR_COMPILE_WITH_OPENGL_
 #undef _IRR_COMPILE_WITH_OPENGL_
@@ -230,7 +230,7 @@ define out. */
  it should be usually the only HW accelerated one. OpenGL is currently disabled
  if using this driver, to avoid problems with the ogl-es emulators.
  */
-#define _IRR_COMPILE_WITH_OGLES1_
+//#define _IRR_COMPILE_WITH_OGLES1_
 #ifdef NO_IRR_COMPILE_WITH_OGLES1_
 #undef _IRR_COMPILE_WITH_OGLES1_
 #endif
@@ -256,14 +256,14 @@ define out. */
 //! Define _IRR_COMPILE_WITH_SOFTWARE_ to compile the Irrlicht engine with software driver
 /** If you do not need the software driver, or want to use Burning's Video instead,
 comment this define out */
-#define _IRR_COMPILE_WITH_SOFTWARE_
+//#define _IRR_COMPILE_WITH_SOFTWARE_
 #ifdef NO_IRR_COMPILE_WITH_SOFTWARE_
 #undef _IRR_COMPILE_WITH_SOFTWARE_
 #endif
 
 //! Define _IRR_COMPILE_WITH_BURNINGSVIDEO_ to compile the Irrlicht engine with Burning's video driver
 /** If you do not need this software driver, you can comment this define out. */
-#define _IRR_COMPILE_WITH_BURNINGSVIDEO_
+//#define _IRR_COMPILE_WITH_BURNINGSVIDEO_
 #ifdef NO_IRR_COMPILE_WITH_BURNINGSVIDEO_
 #undef _IRR_COMPILE_WITH_BURNINGSVIDEO_
 #endif
@@ -272,7 +272,7 @@ comment this define out */
 /** If you do not wish the engine to be compiled with X11, comment this
 define out. */
 // Only used in LinuxDevice.
-#define _IRR_COMPILE_WITH_X11_
+//#define _IRR_COMPILE_WITH_X11_
 #ifdef NO_IRR_COMPILE_WITH_X11_
 #undef _IRR_COMPILE_WITH_X11_
 #endif
@@ -282,7 +282,7 @@ define out. */
 	via function pointers such that this has to be undef'ed. */
 #ifdef _IRR_COMPILE_WITH_OPENGL_
 #if !defined(_IRR_OSX_PLATFORM_) && !defined(_IRR_SOLARIS_PLATFORM_)
-#define _IRR_OPENGL_USE_EXTPOINTER_
+//#define _IRR_OPENGL_USE_EXTPOINTER_
 #endif
 #endif
 

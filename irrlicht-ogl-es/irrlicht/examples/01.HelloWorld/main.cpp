@@ -43,6 +43,10 @@ After we have set up the IDE, the compiler will know where to find the Irrlicht
 Engine header files so we can include it now in our code.
 */
 #include <irrlicht.h>
+#include <string>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 /*
 In the Irrlicht Engine, everything can be found in the namespace 'irr'. So if
@@ -81,6 +85,24 @@ losing platform independence then.
 #pragma comment(lib, "Irrlicht.lib")
 #pragma comment(linker, "/subsystem:windows /ENTRY:mainCRTStartup")
 #endif
+
+SIrrlichtCreationParameters params;
+IrrlichtDevice *device;
+IVideoDriver* driver;
+ISceneManager* smgr;
+IGUIEnvironment* guienv;
+
+void main_loop()
+{
+  device->run();
+
+  driver->beginScene(true, true, SColor(255,100,101,140));
+
+  smgr->drawAll();
+  guienv->drawAll();
+
+  driver->endScene();
+}
 
 
 /*
@@ -121,9 +143,16 @@ int main()
 	Always check the return value to cope with unsupported drivers,
 	dimensions, etc.
 	*/
-	IrrlichtDevice *device =
-		createDevice( video::EDT_OGLES1, dimension2d<u32>(640, 480), 16,
-			false, false, false, 0);
+    params = SIrrlichtCreationParameters();
+    params.DriverType = video::EDT_OGLES2;
+    params.WindowSize = dimension2d<u32>(640, 480);
+    params.Bits = 16;
+    params.Fullscreen = false;
+    params.Stencilbuffer = false;
+    params.Vsync = false;
+    params.EventReceiver = 0;
+    params.OGLES2ShaderPath = std::string("media/Shaders/").c_str();
+    device = createDeviceEx(params);
 
 	if (!device)
 		return 1;
@@ -141,9 +170,9 @@ int main()
 	device->getVideoDriver(), device->getSceneManager(), or
 	device->getGUIEnvironment().
 	*/
-	IVideoDriver* driver = device->getVideoDriver();
-	ISceneManager* smgr = device->getSceneManager();
-	IGUIEnvironment* guienv = device->getGUIEnvironment();
+    driver = device->getVideoDriver();
+    smgr = device->getSceneManager();
+    guienv = device->getGUIEnvironment();
 
 	/*
 	We add a hello world label to the window, using the GUI environment.
@@ -165,7 +194,7 @@ int main()
 	other supported file format. By the way, that cool Quake 2 model
 	called sydney was modelled by Brian Collins.
 	*/
-	IAnimatedMesh* mesh = smgr->getMesh("../../media/sydney.md2");
+	IAnimatedMesh* mesh = smgr->getMesh("media/sydney.md2");
 	if (!mesh)
 	{
 		device->drop();
@@ -185,7 +214,7 @@ int main()
 	{
 		node->setMaterialFlag(EMF_LIGHTING, false);
 		node->setMD2Animation(scene::EMAT_STAND);
-		node->setMaterialTexture( 0, driver->getTexture("../../media/sydney.bmp") );
+		node->setMaterialTexture( 0, driver->getTexture("media/sydney.bmp") );
 	}
 
 	/*
@@ -201,22 +230,7 @@ int main()
 	more. This would be when the user closes the window or presses ALT+F4
 	(or whatever keycode closes a window).
 	*/
-	while(device->run())
-	{
-		/*
-		Anything can be drawn between a beginScene() and an endScene()
-		call. The beginScene() call clears the screen with a color and
-		the depth buffer, if desired. Then we let the Scene Manager and
-		the GUI Environment draw their content. With the endScene()
-		call everything is presented on the screen.
-		*/
-		driver->beginScene(true, true, SColor(255,100,101,140));
-
-		smgr->drawAll();
-		guienv->drawAll();
-
-		driver->endScene();
-	}
+    emscripten_set_main_loop(main_loop,0,1);
 
 	/*
 	After we are done with the render loop, we have to delete the Irrlicht

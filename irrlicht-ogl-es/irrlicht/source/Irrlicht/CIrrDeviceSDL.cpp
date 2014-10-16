@@ -19,7 +19,6 @@
 #include "SIrrCreationParameters.h"
 #include <SDL/SDL_syswm.h>
 #include <SDL/SDL_video.h>
-
 #ifdef _MSC_VER
 #pragma comment(lib, "SDL.lib")
 #endif // _MSC_VER
@@ -43,6 +42,11 @@ namespace irr
 		IVideoDriver* createOpenGLDriver(const SIrrlichtCreationParameters& params,
 				io::IFileSystem* io, CIrrDeviceSDL* device);
 		#endif
+
+        #ifdef _IRR_COMPILE_WITH_OGLES2_
+        IVideoDriver* createOGLES2Driver(const SIrrlichtCreationParameters& params,
+                io::IFileSystem* io);
+        #endif
 	} // end namespace video
 
 } // end namespace irr
@@ -86,6 +90,9 @@ CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters& param)
 
 	SDL_VERSION(&Info.version);
 
+// SDL_GetWMInfo is an undefined symbol in Emscripten's SDL
+// TODO find an equivalent
+#ifndef _IRR_COMPILE_WITH_EMSCRIPTEN
 	SDL_GetWMInfo(&Info);
 	core::stringc sdlversion = "SDL Version ";
 	sdlversion += Info.version.major;
@@ -96,6 +103,7 @@ CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters& param)
 
 	Operator = new COSOperator(sdlversion);
 	os::Printer::log(sdlversion.c_str(), ELL_INFORMATION);
+#endif
 
 	// create keymap
 	createKeyMap();
@@ -106,7 +114,7 @@ CIrrDeviceSDL::CIrrDeviceSDL(const SIrrlichtCreationParameters& param)
 
 	if ( CreationParams.Fullscreen )
 		SDL_Flags |= SDL_FULLSCREEN;
-	if (CreationParams.DriverType == video::EDT_OPENGL)
+	if (CreationParams.DriverType == video::EDT_OPENGL || CreationParams.DriverType == video::EDT_OGLES2)
 		SDL_Flags |= SDL_OPENGL;
 	else if (CreationParams.Doublebuffer)
 		SDL_Flags |= SDL_DOUBLEBUF;
@@ -270,6 +278,14 @@ void CIrrDeviceSDL::createDriver()
 		#endif
 		break;
 
+    case video::EDT_OGLES2:
+        #ifdef _IRR_COMPILE_WITH_OGLES2_
+        VideoDriver = video::createOGLES2Driver(CreationParams, FileSystem);
+        #else
+        os::Printer::log("No OGLES2 support compile in.", ELL_ERROR);
+        #endif
+        break;
+
 	case video::EDT_NULL:
 		VideoDriver = video::createNullDriver(FileSystem, CreationParams.WindowSize);
 		break;
@@ -279,7 +295,6 @@ void CIrrDeviceSDL::createDriver()
 		break;
 	}
 }
-
 
 //! runs the device. Returns false if device wants to be deleted
 bool CIrrDeviceSDL::run()
@@ -400,14 +415,14 @@ bool CIrrDeviceSDL::run()
 				else
 					key = (EKEY_CODE)KeyMap[idx].Win32Key;
 
-#ifdef _IRR_WINDOWS_API_
+	#ifdef _IRR_WINDOWS_API_
 				// handle alt+f4 in Windows, because SDL seems not to
 				if ( (SDL_event.key.keysym.mod & KMOD_LALT) && key == KEY_F4)
 				{
 					Close = true;
 					break;
 				}
-#endif
+	#endif
 				irrevent.EventType = irr::EET_KEY_INPUT_EVENT;
 				irrevent.KeyInput.Char = SDL_event.key.keysym.unicode;
 				irrevent.KeyInput.Key = key;
@@ -456,7 +471,7 @@ bool CIrrDeviceSDL::run()
 
 	} // end while
 
-#if defined(_IRR_COMPILE_WITH_JOYSTICK_EVENTS_)
+	#if defined(_IRR_COMPILE_WITH_JOYSTICK_EVENTS_)
 	// TODO: Check if the multiple open/close calls are too expensive, then
 	// open/close in the constructor/destructor instead
 
@@ -535,7 +550,8 @@ bool CIrrDeviceSDL::run()
 			// and close the joystick
 		}
 	}
-#endif
+	#endif
+
 	return !Close;
 }
 
@@ -976,4 +992,3 @@ void CIrrDeviceSDL::createKeyMap()
 } // end namespace irr
 
 #endif // _IRR_COMPILE_WITH_SDL_DEVICE_
-
