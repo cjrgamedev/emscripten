@@ -14,6 +14,9 @@ console.
 */
 #include <irrlicht.h>
 #include <iostream>
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 /*
 As already written in the HelloWorld example, in the Irrlicht Engine everything
@@ -36,6 +39,39 @@ easy, we use a pragma comment lib:
 #pragma comment(lib, "Irrlicht.lib")
 #endif
 
+SIrrlichtCreationParameters params;
+IrrlichtDevice *device;
+video::IVideoDriver* driver;
+scene::ISceneManager* smgr;
+scene::IAnimatedMesh* mesh;
+scene::ISceneNode* node;
+
+void main_loop()
+{
+	// this FPS calculation is likely to be incorrect
+	int lastFPS = -1;
+
+	device->run();
+
+	driver->beginScene(true, true, video::SColor(255,200,200,200));
+	smgr->drawAll();
+	driver->endScene();
+
+	int fps = driver->getFPS();
+
+	if (lastFPS != fps)
+	{
+		core::stringw str = L"Irrlicht Engine - Quake 3 Map example [";
+		str += driver->getName();
+		str += "] FPS:";
+		str += fps;
+
+		device->setWindowCaption(str.c_str());
+		lastFPS = fps;
+	}
+
+}
+
 /*
 Ok, lets start. Again, we use the main() method as start, not the WinMain().
 */
@@ -56,6 +92,10 @@ int main()
 
 	video::E_DRIVER_TYPE driverType;
 
+#ifdef __EMSCRIPTEN__
+// only use OGLES2 for Emscripten
+driverType = video::EDT_OGLES2;
+#else
 	printf("Please select the driver you want for this example:\n"\
 		" (a) OpenGL ES 2.x\n (b) OpenGL ES 1.x\n (c) OpenGL 1.x-4.x\n"\
 		" (d) Direct3D 9.0c\n (e) Direct3D 8.1\n"\
@@ -77,11 +117,19 @@ int main()
 		case 'h': driverType = video::EDT_NULL;     break;
 		default: return 1;
 	}
+#endif
 
 	// create device and exit if creation failed
-
-	IrrlichtDevice *device =
-		createDevice(driverType, core::dimension2d<u32>(640, 480));
+	params = SIrrlichtCreationParameters();
+	params.DriverType = video::EDT_OGLES2;
+	params.WindowSize = core::dimension2d<u32>(640, 480);
+	params.Bits = 16;
+	params.Fullscreen = false;
+	params.Stencilbuffer = false;
+	params.Vsync = false;
+	params.EventReceiver = 0;
+	params.OGLES2ShaderPath = std::string("media02/Shaders/").c_str();
+	device = createDeviceEx(params);
 
 	if (device == 0)
 		return 1; // could not create selected driver.
@@ -91,8 +139,8 @@ int main()
 	we do not always have to call irr::IrrlichtDevice::getVideoDriver() and
 	irr::IrrlichtDevice::getSceneManager().
 	*/
-	video::IVideoDriver* driver = device->getVideoDriver();
-	scene::ISceneManager* smgr = device->getSceneManager();
+	driver = device->getVideoDriver();
+	smgr = device->getSceneManager();
 
 	/*
 	To display the Quake 3 map, we first need to load it. Quake 3 maps
@@ -101,7 +149,7 @@ int main()
 	we are able to read from the files in that archive as if they are
 	directly stored on the disk.
 	*/
-	device->getFileSystem()->addFileArchive("../../media/map-20kdm2.pk3");
+	device->getFileSystem()->addFileArchive("media02/map-20kdm2.pk3");
 
 	/*
 	Now we can load the mesh by calling
@@ -123,8 +171,8 @@ int main()
 	optimization with the Octree is only useful when drawing huge meshes
 	consisting of lots of geometry.
 	*/
-	scene::IAnimatedMesh* mesh = smgr->getMesh("20kdm2.bsp");
-	scene::ISceneNode* node = 0;
+	mesh = smgr->getMesh("20kdm2.bsp");
+	node = 0;
 
 	if (mesh)
 		node = smgr->addOctreeSceneNode(mesh->getMesh(0), 0, -1, 1024);
@@ -170,6 +218,9 @@ int main()
 	irr::IrrlichtDevice::yield() will avoid the busy loop to eat up all CPU
 	cycles when the window is not active.
 	*/
+#ifdef __EMSCRIPTEN__
+	emscripten_set_main_loop(main_loop,0,1);
+#else
 	int lastFPS = -1;
 
 	while(device->run())
@@ -196,6 +247,7 @@ int main()
 		else
 			device->yield();
 	}
+#endif
 
 	/*
 	In the end, delete the Irrlicht device.
