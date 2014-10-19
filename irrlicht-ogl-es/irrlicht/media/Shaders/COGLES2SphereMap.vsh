@@ -51,7 +51,7 @@ void dirLight(in int index, in vec3 position, in vec3 normal, inout vec4 ambient
 	{
 		diffuse += uLightDiffuse[index] * NdotL;
 
-		vec3 E = normalize(-position); 
+		vec3 E = normalize(-position);
 		vec3 HalfVector = normalize(L + E);
 		float NdotH = max(0.0, dot(normal, HalfVector));
 
@@ -77,7 +77,7 @@ void pointLight(in int index, in vec3 position, in vec3 normal, inout vec4 ambie
 	{
 		diffuse += uLightDiffuse[index] * NdotL * Attenuation;
 
-		vec3 E = normalize(-position); 
+		vec3 E = normalize(-position);
 		vec3 HalfVector = normalize(L + E);
 		float NdotH = max(0.0, dot(normal, HalfVector));
 
@@ -114,23 +114,26 @@ void main()
 		vec4 Ambient = vec4(0.0, 0.0, 0.0, 0.0);
 		vec4 Diffuse = vec4(0.0, 0.0, 0.0, 0.0);
 
-		for (int i = 0; i < int(uLightCount); i++)
+		for (int x = 0; x < MAX_LIGHTS; x++)
 		{
-			if (uLightType[i] == 0)
-				pointLight(i, Position, Normal, Ambient, Diffuse, vSpecularColor);
-		}
+    	if (x < uLightCount)
+      {
+      	if (uLightType[x] == 0)
+        {
+        	pointLight(x, Position, Normal, Ambient, Diffuse, vSpecularColor);
+				}
 
-		for (int i = 0; i < int(uLightCount); i++)
-		{
-			if (uLightType[i] == 1)
-				spotLight(i, Position, Normal, Ambient, Diffuse, vSpecularColor);
-		}
+        if (uLightType[x] == 1)
+				{
+        	spotLight(x, Position, Normal, Ambient, Diffuse, vSpecularColor);
+				}
 
-		for (int i = 0; i < int(uLightCount); i++)
-		{
-			if (uLightType[i] == 2)
-				dirLight(i, Position, Normal, Ambient, Diffuse, vSpecularColor);
-		}
+        if (uLightType[x] == 2)
+				{
+        	dirLight(x, Position, Normal, Ambient, Diffuse, vSpecularColor);
+        }
+			}
+  	}
 
 		vec4 LightColor = Ambient * uMaterialAmbient + Diffuse * uMaterialDiffuse;
 		LightColor = clamp(LightColor, 0.0, 1.0);
@@ -140,7 +143,7 @@ void main()
 		vVertexColor += uMaterialEmissive;
 		vVertexColor += uGlobalAmbient * uMaterialAmbient;
 		vVertexColor = clamp(vVertexColor, 0.0, 1.0);
-		
+
 		vSpecularColor *= uMaterialSpecular;
 	}
 
