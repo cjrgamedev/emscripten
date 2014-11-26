@@ -260,12 +260,14 @@ void COGLES2Texture::getFormatParameters(ECOLOR_FORMAT format, GLint& internalFo
 			pixelFormat = GL_RGBA;
 			type = GL_UNSIGNED_SHORT_5_5_5_1;
 			convert = CColorConverter::convert_A1R5G5B5toR5G5B5A1;
+			os::Printer::log("ECF_A1R5G5B5", ELL_ERROR);
 			break;
 		case ECF_R5G6B5:
 			internalFormat = GL_RGB;
 			filtering = GL_LINEAR;
 			pixelFormat = GL_RGB;
 			type = GL_UNSIGNED_SHORT_5_6_5;
+			os::Printer::log("ECF_R5G6B5", ELL_ERROR);
 			break;
 		case ECF_R8G8B8:
 			internalFormat = GL_RGB;
@@ -273,8 +275,10 @@ void COGLES2Texture::getFormatParameters(ECOLOR_FORMAT format, GLint& internalFo
 			pixelFormat = GL_RGB;
 			type = GL_UNSIGNED_BYTE;
 			convert = CColorConverter::convert_R8G8B8toB8G8R8;
+			os::Printer::log("ECF_R8G8B8", ELL_ERROR);
 			break;
 		case ECF_A8R8G8B8:
+			os::Printer::log("ECF_A8R8G8B8", ELL_ERROR);
 			filtering = GL_LINEAR;
 			type = GL_UNSIGNED_BYTE;
 			if (!Driver->queryOpenGLFeature(COGLES2ExtensionHandler::IRR_IMG_texture_format_BGRA8888) &&
@@ -284,11 +288,13 @@ void COGLES2Texture::getFormatParameters(ECOLOR_FORMAT format, GLint& internalFo
 				internalFormat = GL_RGBA;
 				pixelFormat = GL_RGBA;
 				convert = CColorConverter::convert_A8R8G8B8toA8B8G8R8;
+				os::Printer::log("Using GL_RGBA", ELL_ERROR);
 			}
 			else
 			{
 				internalFormat = GL_BGRA;
 				pixelFormat = GL_BGRA;
+				os::Printer::log("Using GL_BGRA", ELL_ERROR);
 			}
 			break;
 #ifdef GL_EXT_texture_compression_s3tc
@@ -1177,4 +1183,3 @@ bool checkOGLES2FBOStatus(COGLES2Driver* Driver)
 } // end namespace irr
 
 #endif // _IRR_COMPILE_WITH_OGLES2_
-

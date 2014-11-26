@@ -45,31 +45,15 @@ video::IVideoDriver* driver;
 scene::ISceneManager* smgr;
 scene::IAnimatedMesh* mesh;
 scene::ISceneNode* node;
+s32 MouseX, MouseY;
+u32 MouseButtonStates;
 
 void main_loop()
 {
-	// this FPS calculation is likely to be incorrect
-	int lastFPS = -1;
-
 	device->run();
-
 	driver->beginScene(true, true, video::SColor(255,200,200,200));
 	smgr->drawAll();
 	driver->endScene();
-
-	int fps = driver->getFPS();
-
-	if (lastFPS != fps)
-	{
-		core::stringw str = L"Irrlicht Engine - Quake 3 Map example [";
-		str += driver->getName();
-		str += "] FPS:";
-		str += fps;
-
-		device->setWindowCaption(str.c_str());
-		lastFPS = fps;
-	}
-
 }
 
 /*
@@ -77,6 +61,11 @@ Ok, lets start. Again, we use the main() method as start, not the WinMain().
 */
 int main()
 {
+	// init the mouse related variables
+	MouseX = 0;
+	MouseY = 0;
+	MouseButtonStates = 0;
+
 	/*
 	Like in the HelloWorld example, we create an IrrlichtDevice with
 	createDevice(). The difference now is that we ask the user to select

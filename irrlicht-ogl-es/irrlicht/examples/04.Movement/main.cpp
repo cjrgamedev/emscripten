@@ -19,6 +19,9 @@ and tell the linker to link with the .lib file.
 
 #include <irrlicht.h>
 #include "driverChoice.h"
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 using namespace irr;
 
@@ -48,7 +51,7 @@ public:
 	{
 		return KeyIsDown[keyCode];
 	}
-	
+
 	MyEventReceiver()
 	{
 		for (u32 i=0; i<KEY_KEY_CODES_COUNT; ++i)
@@ -60,6 +63,56 @@ private:
 	bool KeyIsDown[KEY_KEY_CODES_COUNT];
 };
 
+MyEventReceiver receiver;
+u32 then;
+SIrrlichtCreationParameters params;
+IrrlichtDevice* device;
+video::IVideoDriver* driver;
+scene::ISceneManager* smgr;
+scene::ISceneNode * node;
+scene::ISceneNode* n;
+scene::ISceneNodeAnimator* anim;
+scene::ISceneNodeAnimator* anim2;
+scene::IAnimatedMeshSceneNode* anms;
+// This is the movement speed in units per second.
+const f32 MOVEMENT_SPEED = 5.f;
+
+#ifdef __EMSCRIPTEN__
+
+void main_loop()
+{
+	device->run();
+
+	// Work out a frame delta time.
+	const u32 now = device->getTimer()->getTime();
+	const f32 frameDeltaTime = (f32)(now - then) / 1000.f; // Time in seconds
+	then = now;
+
+	/* Check if keys W, S, A or D are being held down, and move the
+	sphere node around respectively. */
+	core::vector3df nodePosition = node->getPosition();
+
+	if(receiver.IsKeyDown(irr::KEY_KEY_W))
+		nodePosition.Y += MOVEMENT_SPEED * frameDeltaTime;
+	else if(receiver.IsKeyDown(irr::KEY_KEY_S))
+		nodePosition.Y -= MOVEMENT_SPEED * frameDeltaTime;
+
+	if(receiver.IsKeyDown(irr::KEY_KEY_A))
+		nodePosition.X -= MOVEMENT_SPEED * frameDeltaTime;
+	else if(receiver.IsKeyDown(irr::KEY_KEY_D))
+		nodePosition.X += MOVEMENT_SPEED * frameDeltaTime;
+
+	node->setPosition(nodePosition);
+
+	driver->beginScene(true, true, video::SColor(255,113,113,133));
+
+	smgr->drawAll(); // draw the 3d scene
+	device->getGUIEnvironment()->drawAll(); // draw the gui environment (the logo)
+
+	driver->endScene();
+}
+
+#endif //__EMSCRIPTEN__
 
 /*
 The event receiver for keeping the pressed keys is ready, the actual responses
@@ -70,22 +123,33 @@ different possibilities to move and animate scene nodes.
 */
 int main()
 {
+#ifdef __EMSCRIPTEN__
+	// only use OGLES2 for Emscripten
+	video::E_DRIVER_TYPE driverType = video::EDT_OGLES2;
+#else
 	// ask user for driver
 	video::E_DRIVER_TYPE driverType=driverChoiceConsole();
 	if (driverType==video::EDT_COUNT)
 		return 1;
+#endif
 
 	// create device
-	MyEventReceiver receiver;
-
-	IrrlichtDevice* device = createDevice(driverType,
-			core::dimension2d<u32>(640, 480), 16, false, false, false, &receiver);
+	params = SIrrlichtCreationParameters();
+	params.DriverType = video::EDT_OGLES2;
+	params.WindowSize = core::dimension2d<u32>(640, 480);
+	params.Bits = 16;
+	params.Fullscreen = false;
+	params.Stencilbuffer = false;
+	params.Vsync = false;
+	params.EventReceiver = &receiver;
+	params.OGLES2ShaderPath = std::string("media04/Shaders/").c_str();
+	device = createDeviceEx(params);
 
 	if (device == 0)
 		return 1; // could not create selected driver.
 
-	video::IVideoDriver* driver = device->getVideoDriver();
-	scene::ISceneManager* smgr = device->getSceneManager();
+	driver = device->getVideoDriver();
+	smgr = device->getSceneManager();
 
 	/*
 	Create the node which will be moved with the WSAD keys. We create a
@@ -94,11 +158,11 @@ int main()
 	interesting. Because we have no dynamic lights in this scene we disable
 	lighting for each model (otherwise the models would be black).
 	*/
-	scene::ISceneNode * node = smgr->addSphereSceneNode();
+	node = smgr->addSphereSceneNode();
 	if (node)
 	{
 		node->setPosition(core::vector3df(0,0,30));
-		node->setMaterialTexture(0, driver->getTexture("../../media/wall.bmp"));
+		node->setMaterialTexture(0, driver->getTexture("../../media04/wall.bmp"));
 		node->setMaterialFlag(video::EMF_LIGHTING, false);
 	}
 
@@ -111,13 +175,13 @@ int main()
 	example. We create a cube scene node and attach a 'fly circle' scene
 	node animator to it, letting this node fly around our sphere scene node.
 	*/
-	scene::ISceneNode* n = smgr->addCubeSceneNode();
+	n = smgr->addCubeSceneNode();
 
 	if (n)
 	{
-		n->setMaterialTexture(0, driver->getTexture("../../media/t351sml.jpg"));
+		n->setMaterialTexture(0, driver->getTexture("../../media04/t351sml.jpg"));
 		n->setMaterialFlag(video::EMF_LIGHTING, false);
-		scene::ISceneNodeAnimator* anim =
+		anim =
 			smgr->createFlyCircleAnimator(core::vector3df(0,0,30), 20.0f);
 		if (anim)
 		{
@@ -130,18 +194,18 @@ int main()
 	The last scene node we add to show possibilities of scene node animators is
 	a b3d model, which uses a 'fly straight' animator to run between to points.
 	*/
-	scene::IAnimatedMeshSceneNode* anms =
-		smgr->addAnimatedMeshSceneNode(smgr->getMesh("../../media/ninja.b3d"));
+	anms =
+		smgr->addAnimatedMeshSceneNode(smgr->getMesh("../../media04/ninja.b3d"));
 
 	if (anms)
 	{
-		scene::ISceneNodeAnimator* anim =
+		anim2 =
 			smgr->createFlyStraightAnimator(core::vector3df(100,0,60),
 			core::vector3df(-100,0,60), 3500, true);
-		if (anim)
+		if (anim2)
 		{
-			anms->addAnimator(anim);
-			anim->drop();
+			anms->addAnimator(anim2);
+			anim2->drop();
 		}
 
 		/*
@@ -180,13 +244,17 @@ int main()
 	Add a colorful irrlicht logo
 	*/
 	device->getGUIEnvironment()->addImage(
-		driver->getTexture("../../media/irrlichtlogoalpha2.tga"),
+		driver->getTexture("../../media04/irrlichtlogoalpha2.tga"),
 		core::position2d<s32>(10,20));
 
 	gui::IGUIStaticText* diagnostics = device->getGUIEnvironment()->addStaticText(
 		L"", core::rect<s32>(10, 10, 400, 20));
 	diagnostics->setOverrideColor(video::SColor(255, 255, 255, 0));
 
+#ifdef __EMSCRIPTEN__
+	then = device->getTimer()->getTime();
+	emscripten_set_main_loop(main_loop, 0, 1);
+#else
 	/*
 	We have done everything, so lets draw it. We also write the current
 	frames per second and the name of the driver to the caption of the
@@ -197,9 +265,6 @@ int main()
 	// In order to do framerate independent movement, we have to know
 	// how long it was since the last frame
 	u32 then = device->getTimer()->getTime();
-
-	// This is the movemen speed in units per second.
-	const f32 MOVEMENT_SPEED = 5.f;
 
 	while(device->run())
 	{
@@ -244,12 +309,13 @@ int main()
 			lastFPS = fps;
 		}
 	}
+#endif // __EMSCRIPTEN__
 
 	/*
 	In the end, delete the Irrlicht device.
 	*/
 	device->drop();
-	
+
 	return 0;
 }
 
